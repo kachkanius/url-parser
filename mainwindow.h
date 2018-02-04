@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <PageLoader.h>
 
 namespace Ui {
 class MainWindow;
@@ -19,6 +20,7 @@ private:
     Ui::MainWindow *ui;
 private slots:
  void handleButton();
+  void threadFinished(QStringList urls);
 };
 
 #endif // MAINWINDOW_H

@@ -7,7 +7,12 @@
 #include <QFile>
 #include <QRunnable>
 #include <QThread>
+
 #include <QThreadPool>
+#include <QQueue>
+
+#include <PageParser.h>
+#include <PageLoader.h>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -23,57 +28,54 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-
-class HelloWorldTask : public QRunnable
-{
-    void run()
-    {
-        qDebug() << "Hello world from thread" << QThread::currentThreadId();
-        QEventLoop loop;
-        QNetworkAccessManager nam;
-
-    //    QNetworkRequest req(QUrl("http://htmlcxx.sourceforge.net/"));
-    //    req.setRawHeader("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0");
-
-    //      QNetworkRequest req(QUrl("http://htmlcxx.sourceforge.net"));
-          QNetworkRequest req(QUrl("http://www.fsf.org"));
+//"http://htmlcxx.sourceforge.net"
+QQueue<PageLoader*> jobs;
 
 
-        req.setRawHeader("User-Agent", "Mozilla/5.0 (Android; Mobile; rv:40.0) Gecko/40.0 Firefox/40.0");
-        QNetworkReply *reply = nam.get(req);
-        QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-        loop.exec();
-        QByteArray buffer = reply->readAll();
-//        qDebug() << reply->rawHeader("Location");
-        qDebug() << "HTTP status: " << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+void MainWindow::threadFinished(QStringList urls) {
+    qDebug() <<"GOT URLS in main thread:";
 
-//        ui->text_browser->setText(QString(buffer));
-
-        qDebug() << buffer;
-
-        QString file_name = "result_" + QString::number(*(u_int64_t*)QThread::currentThreadId());;
-        qDebug() << "File: "<<file_name;
-        QFile file(file_name);
-        file.open(QIODevice::WriteOnly);
-        file.write(buffer);
-        file.close();
+    for (auto& it : urls) {
+        qDebug() << it;
     }
-};
-
-
+}
 
 void MainWindow::handleButton() {
     qDebug() <<"start button pressed!\n";
-    QThreadPool::globalInstance()->setMaxThreadCount(10);
 
-    HelloWorldTask *hello = new HelloWorldTask();
+    //    QFile file("result_139988983199488");
+    //    file.open(QIODevice::ReadOnly);
+    //    qint64 s = file.size();
+    //    QByteArray text = file.read(s);
+    //    file.close();
 
-    // QThreadPool takes ownership and deletes 'hello' automatically
-    QThreadPool::globalInstance()->start(hello);
 
-    HelloWorldTask *hello2 = new HelloWorldTask();
+    //    QString res(text);
+    //    PageParser p(res);
+    //    PageParser::URLS re =  p.getUrls();
 
-    // QThreadPool takes ownership and deletes 'hello' automatically
-QThreadPool::globalInstance()->start(hello2);
+    //    for (auto& it : re) {
+    //        qDebug() << it;
+    //    }
+
+    //        ui->text_browser->setText(QString(buffer));
+    qDebug()<< QThreadPool::globalInstance()->activeThreadCount();
+    QThreadPool::globalInstance()->setMaxThreadCount(2);
+
+
+    PageLoader* start = new PageLoader("http://htmlcxx.sourceforge.net");
+    jobs.enqueue(start);
+
+    QThreadPool *threadPool = QThreadPool::globalInstance();
+    while (!jobs.empty()) {
+        PageLoader* worker = jobs.dequeue();
+        QObject::connect(worker, SIGNAL(finished(QStringList)),
+                         this, SLOT(threadFinished(QStringList)),
+                         Qt::QueuedConnection);
+        threadPool->start(worker);
+    }
+
+    qDebug()<< QThreadPool::globalInstance()->activeThreadCount();
+
 
 }
