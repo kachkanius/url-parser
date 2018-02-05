@@ -9,7 +9,7 @@
 
 #include <QFile>
 
-PageLoader::PageLoader(const QString &sUrl) :m_url(sUrl)
+PageLoader::PageLoader(const QString &sUrl, int depth) :m_url(sUrl), m_depth(depth)
 {
     this->setAutoDelete(true);
 }
@@ -39,7 +39,7 @@ void PageLoader::run()
             qDebug() << it;
         }
 
-        emit finished(urls);
+        emit finished(urls, m_depth);
     }
     qDebug() << "Thread " + thread_str << " will be destroyed now...";
 }

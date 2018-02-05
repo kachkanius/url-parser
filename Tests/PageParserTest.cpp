@@ -2,6 +2,7 @@
 #include <QTest>
 #include <PageParser.h>
 #include <Qt>
+#include <QDir>
 
 PageParserTest::PageParserTest(QObject *parent) : QObject(parent)
 {

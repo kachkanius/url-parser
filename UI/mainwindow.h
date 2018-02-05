@@ -19,9 +19,13 @@ public:
 private:
     Ui::MainWindow *ui;
     QTimer *mainLoopTimer;
+    QQueue<PageLoader*>* jobs;
+    QVector<QQueue<PageLoader*>> grapth;
+    int count;
+
 private slots:
     void handleButton();
-    void threadFinished(QStringList urls);
+    void threadFinished(QStringList urls, int depth);
 };
 
 #endif // MAINWINDOW_H
