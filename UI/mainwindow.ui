@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>669</width>
-    <height>427</height>
+    <width>854</width>
+    <height>552</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>http://help.websiteos.com/websiteos/example_of_a_simple_html_page.htm</string>
+     <string>http://htmlcxx.sourceforge.net</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_url">
@@ -43,10 +43,10 @@
    <widget class="QPushButton" name="button_start">
     <property name="geometry">
      <rect>
-      <x>350</x>
-      <y>330</y>
+      <x>530</x>
+      <y>460</y>
       <width>99</width>
-      <height>27</height>
+      <height>21</height>
      </rect>
     </property>
     <property name="text">
@@ -56,10 +56,10 @@
    <widget class="QPushButton" name="button_pause">
     <property name="geometry">
      <rect>
-      <x>450</x>
-      <y>330</y>
+      <x>640</x>
+      <y>460</y>
       <width>99</width>
-      <height>27</height>
+      <height>21</height>
      </rect>
     </property>
     <property name="text">
@@ -69,10 +69,10 @@
    <widget class="QPushButton" name="button_stop">
     <property name="geometry">
      <rect>
-      <x>560</x>
-      <y>330</y>
+      <x>750</x>
+      <y>460</y>
       <width>99</width>
-      <height>27</height>
+      <height>21</height>
      </rect>
     </property>
     <property name="text">
@@ -162,9 +162,22 @@
      <rect>
       <x>10</x>
       <y>60</y>
-      <width>651</width>
-      <height>271</height>
+      <width>841</width>
+      <height>391</height>
      </rect>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="progressBar">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>460</y>
+      <width>511</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="value">
+     <number>24</number>
     </property>
    </widget>
   </widget>
@@ -173,8 +186,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>669</width>
-     <height>25</height>
+     <width>854</width>
+     <height>22</height>
     </rect>
    </property>
   </widget>

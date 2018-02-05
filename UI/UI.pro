@@ -4,6 +4,7 @@
 #
 #-------------------------------------------------
 
+
 QT += core gui \
    network
 
@@ -13,19 +14,15 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = WebTextFinder
 TEMPLATE = app
 
-INCLUDEPATH += include
+INCLUDEPATH += include \
+                $$PWD/../Engine/include
 
 SOURCES += main.cpp \
-        mainwindow.cpp \
-        src/PageParser.cpp \
-        src/PageLoader.cpp
+        mainwindow.cpp 
 
 HEADERS  +=  \
     mainwindow.h \
-    include/PageParser.h \
-    include/PageLoader.h
 
 FORMS    += mainwindow.ui
 
-OTHER_FILES += \
-    CMakeLists.txt
+LIBS += -L$$PWD/../build/Engine -lwtf_engine

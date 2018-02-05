@@ -18,6 +18,8 @@ signals:
 
 private:
     QUrl m_url;
+    QByteArray m_body;
+    int getPage();
 };
 
 #endif // PAGELOADER_H

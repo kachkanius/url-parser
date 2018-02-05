@@ -18,9 +18,10 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    QTimer *mainLoopTimer;
 private slots:
- void handleButton();
-  void threadFinished(QStringList urls);
+    void handleButton();
+    void threadFinished(QStringList urls);
 };
 
 #endif // MAINWINDOW_H
