@@ -24,13 +24,13 @@ private:
     Manager m_manager;
     QMutex m_textMutex;
 private:
-//    void doHeadJob();
 
 private slots:
     void startButtonPressed();
     void stopButtonPressed();
     void updateItem(size_t id,  PageLoader::Status status);
     void addItem(QString url, size_t id);
+    void updateUi(Manager::State newState);
 };
 
 #endif // MAINWINDOW_H

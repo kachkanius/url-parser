@@ -12,6 +12,13 @@ class Manager : public QObject
 {
     Q_OBJECT
 public:
+    enum class State {
+        STOPPED,
+        RUNNING,
+        PAUSED,
+        FINISHED
+    };
+
     explicit Manager(QObject *parent = nullptr);
 
     ~Manager();
@@ -21,16 +28,14 @@ public:
 
     void start(const QString& startPage, const QString& strToFind);
     void stop();
-    void pause();
-    void resume();
+
 signals:
     void updateItem(size_t id,  PageLoader::Status status);
     void addItem(QString url, size_t id);
+    void stateChanged(Manager::State state);
 
 private slots:
-
     void threadFinished(PageLoader::Status status, QStringList urls, size_t id, int depth);
-
 
 private:
     void startHeadJob();
@@ -40,9 +45,9 @@ private:
     QVector<QQueue<PageLoader*>> m_grapth;
     QMutex m_queueMutex;
     size_t m_maxLinks;
-    size_t m_scannedLinks;
-    size_t m_currentLink;
+    size_t m_linkNum;
     QString m_strToFind;
+    State m_state;
 };
 
 #endif // MANAGER_H
