@@ -6,12 +6,28 @@
 #include <QThread>
 #include <QEventLoop>
 
-
-#include <QFile>
-
-PageLoader::PageLoader(const QString &sUrl, int depth) :m_url(sUrl), m_depth(depth)
+PageLoader::PageLoader(const QString &sUrl, const QString &text, int depth)
+    : m_url(sUrl)
+    , m_depth(depth)
+    , m_str(text)
+    , m_id(0)
 {
     this->setAutoDelete(true);
+}
+
+QString PageLoader::getUrl() const
+{
+    return m_url.toString();
+}
+
+size_t PageLoader::getId() const
+{
+    return m_id;
+}
+
+void PageLoader::setId(size_t id)
+{
+    m_id = id;
 }
 
 void PageLoader::run()
@@ -22,25 +38,19 @@ void PageLoader::run()
 
     int httpStatus = getPage();
 
-    QFile file(thread_str);
-    file.open(QIODevice::WriteOnly | QIODevice::Text);
-    file.write(m_body);
-    file.flush();
-    file.close();
+    Status status = HTTP_ERROR;
+    QStringList urls;
 
-    QString body(m_body);
-
-    if (httpStatus == 200) {
-        PageParser parser(body);
-        QStringList urls = parser.getUrls();
-        qDebug() <<"thread id: " << thread_str << "parsed urls:";
-
-        for (auto& it : urls) {
-            qDebug() << it;
+    if (httpStatus == 200) {        
+        status = NOT_FOUND;
+        QString body_str(m_body);
+        PageParser parser(body_str);
+        urls = parser.getUrls();
+        if (parser.containsStr(m_str)) {
+            status = FOUND;
         }
-
-        emit finished(urls, m_depth);
     }
+    emit pageLoaded(status, urls, m_id, m_depth);
     qDebug() << "Thread " + thread_str << " will be destroyed now...";
 }
 

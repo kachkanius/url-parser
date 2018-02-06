@@ -18,83 +18,107 @@
 #include <QMutex>
 #include <QMutexLocker>
 
-QMutex queueMutex;
-QQueue<PageLoader*>* jobs;
-bool bPaused = false;
-QVector<QQueue<PageLoader*>> grapth;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow),
-    count(0)
+    ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    connect(ui->button_start, SIGNAL (released()), this, SLOT (handleButton()));
+    connect(ui->button_start, SIGNAL (released()), this, SLOT (startButtonPressed()));
+    connect(ui->button_stop, SIGNAL (released()), this, SLOT (stopButtonPressed()));
 
-    mainLoopTimer = new QTimer(this);
-    connect(mainLoopTimer, &QTimer::timeout, [this]
-    {
-
-        QThreadPool *threadPool = QThreadPool::globalInstance();
-
-        QMutexLocker locker(&queueMutex);
-        if (jobs->isEmpty()) {
-            return;
-        }
-        PageLoader* worker = jobs->dequeue();
-        QObject::connect(worker, SIGNAL(finished(QStringList, int)),
-                         this, SLOT(threadFinished(QStringList, int)),
-                         Qt::QueuedConnection);
-        threadPool->start(worker);
-//        ++count;
+    connect(&m_manager, SIGNAL (addItem(QString, size_t)), this, SLOT (addItem(QString, size_t)));
+    connect(&m_manager, SIGNAL (updateItem(size_t, PageLoader::Status)), this, SLOT (updateItem(size_t, PageLoader::Status)));
 
 
-//        qDebug()<< QThreadPool::globalInstance()->activeThreadCount();
-    } );
+
+
+
 
 }
+
 
 MainWindow::~MainWindow()
 {
     delete ui;
 }
 
+//void MainWindow::doHeadJob()
+//{
+//    if (jobs->isEmpty()) {
+//        return;
+//    }
+//    PageLoader* worker = jobs->dequeue();
+//    QObject::connect(worker, SIGNAL(finished(QStringList, int)),
+//                     this, SLOT(threadFinished(QStringList, int)),
+//                     Qt::QueuedConnection);
+//    QThreadPool::globalInstance()->start(worker);
+//}
 
-void MainWindow::threadFinished(QStringList urls, int depth) {
-    QMutexLocker locker(&queueMutex);
-    qDebug() <<"GOT URLS in main thread:";
 
-    if (grapth.size() <= depth + 1) {
-        grapth.push_back(QQueue<PageLoader*>());
-    }
+//void MainWindow::threadFinished(QStringList urls, int depth) {
+//    QMutexLocker locker(&queueMutex);
+//    qDebug() <<"GOT URLS in main thread:";
 
-    for (auto& it : urls) {
-        qDebug() << it;
-        grapth[depth + 1].enqueue(new PageLoader(it, depth + 1));
-        ++count;
-        if (count > 500) {
-            qDebug() << "Stop LOOP!!";
+//    if (grapth.size() <= depth + 1) {
+//        grapth.push_back(QQueue<PageLoader*>());
+//    }
 
-            mainLoopTimer->stop();
-        }
-    }
+//    for (auto& it : urls) {
+//        qDebug() << it;
+//        grapth[depth + 1].enqueue(new PageLoader(it, depth + 1));
+//        ++count;
+//        if (count > 50) {
+//            qDebug() << "Stop LOOP!!";
+//            QThreadPool::globalInstance()->clear();
+//            return;
+//        }
+//    }
 
-    if (jobs->empty() && grapth.size() > depth) {
-        jobs = &grapth[depth + 1];
-    }
+//    if (jobs->empty() && grapth.size() > depth) {
+//        jobs = &grapth[depth + 1];
+//    }
+
+//    doHeadJob();
+
+//}
+
+
+void MainWindow::startButtonPressed() {
+//    qDebug() <<"start button pressed!\n";
+//    QThreadPool::globalInstance()->setMaxThreadCount(2);
+
+
+//    PageLoader* firstItem = new PageLoader("http://htmlcxx.sourceforge.net", 0);
+//    QQueue<PageLoader*> zero;
+//    zero.enqueue(firstItem);
+//    grapth.push_back(zero);
+//    jobs = &grapth[0];
+
+//    doHeadJob();
+    ui->text_browser->clear();
+
+    m_manager.setMaxScannedLinks(50);
+    m_manager.setMaxThreadsCount(8);
+    m_manager.start("http://htmlcxx.sourceforge.net", "Hello");
 
 }
 
+void MainWindow::stopButtonPressed()
+{
+    m_manager.stop();
+}
 
-void MainWindow::handleButton() {
-    qDebug() <<"start button pressed!\n";
-    QThreadPool::globalInstance()->setMaxThreadCount(2);
+void MainWindow::updateItem(size_t id, PageLoader::Status status)
+{
+    QMutexLocker locker(&m_textMutex);
+    qDebug() <<  "Update item# " + QString::number(id) << " status :" << (int)status;
+}
 
-    PageLoader* firstItem = new PageLoader("http://htmlcxx.sourceforge.net", 0);
-    QQueue<PageLoader*> zero;
-    zero.enqueue(firstItem);
-    grapth.push_back(zero);
-    jobs = &grapth[0];
+void MainWindow::addItem(QString url, size_t id)
+{
+    QMutexLocker locker(&m_textMutex);
+    QString item(url + " " +  QString::number(id) + " LOADING ");
+    ui->text_browser->append(item);
 
-    mainLoopTimer->start(0);
 }

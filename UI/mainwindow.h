@@ -2,7 +2,10 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <PageLoader.h>
+//#include <PageLoader.h>
+//#include <QMutex>
+
+#include <Manager.h>
 
 namespace Ui {
 class MainWindow;
@@ -18,14 +21,16 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    QTimer *mainLoopTimer;
-    QQueue<PageLoader*>* jobs;
-    QVector<QQueue<PageLoader*>> grapth;
-    int count;
+    Manager m_manager;
+    QMutex m_textMutex;
+private:
+//    void doHeadJob();
 
 private slots:
-    void handleButton();
-    void threadFinished(QStringList urls, int depth);
+    void startButtonPressed();
+    void stopButtonPressed();
+    void updateItem(size_t id,  PageLoader::Status status);
+    void addItem(QString url, size_t id);
 };
 
 #endif // MAINWINDOW_H

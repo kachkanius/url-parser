@@ -17,8 +17,10 @@ TARGET = wtf_engine
 INCLUDEPATH += include
 
 SOURCES += src/PageParser.cpp \
-           src/PageLoader.cpp
+           src/PageLoader.cpp \
+           src/Manager.cpp
 
 HEADERS  += include/PageParser.h \
-            include/PageLoader.h
+            include/PageLoader.h \
+            include/Manager.h
 
