@@ -7,6 +7,7 @@
 #include <QString>
 #include <QVector>
 #include <QQueue>
+#include <QThreadPool>
 
 class Manager : public QObject
 {
@@ -23,19 +24,20 @@ public:
 
     ~Manager();
 
-    void setMaxScannedLinks(size_t links);
+    void setMaxScannedLinks(int links);
+    int getMaxScannedLinks() const;
     void setMaxThreadsCount(int threads);
 
     void start(const QString& startPage, const QString& strToFind);
     void stop();
 
 signals:
-    void updateItem(size_t id,  PageLoader::Status status);
-    void addItem(QString url, size_t id);
+    void updateItem(int id,  PageLoader::Status status);
+    void addItem(QString url, int id);
     void stateChanged(Manager::State state);
 
 private slots:
-    void threadFinished(PageLoader::Status status, QStringList urls, size_t id, int depth);
+    void threadFinished(PageLoader::Status status, QStringList urls, int id, int depth);
 
 private:
     void startHeadJob();
@@ -44,8 +46,9 @@ private:
     QQueue<PageLoader*>* m_currentJobs;
     QVector<QQueue<PageLoader*>> m_grapth;
     QMutex m_queueMutex;
-    size_t m_maxLinks;
-    size_t m_linkNum;
+    QThreadPool m_pool;
+    int m_maxLinks;
+    int m_linkNum;
     QString m_strToFind;
     State m_state;
 };

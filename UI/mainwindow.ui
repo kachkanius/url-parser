@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>854</width>
-    <height>552</height>
+    <width>850</width>
+    <height>550</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
@@ -19,7 +25,7 @@
      <rect>
       <x>50</x>
       <y>0</y>
-      <width>801</width>
+      <width>791</width>
       <height>27</height>
      </rect>
     </property>
@@ -89,7 +95,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>1</string>
+     <string>3</string>
     </property>
     <property name="readOnly">
      <bool>false</bool>
@@ -100,12 +106,12 @@
      <rect>
       <x>740</x>
       <y>30</y>
-      <width>111</width>
+      <width>101</width>
       <height>27</height>
      </rect>
     </property>
     <property name="text">
-     <string>1</string>
+     <string>10</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_max_urls">
@@ -147,16 +153,6 @@
      <string>Text to find</string>
     </property>
    </widget>
-   <widget class="QTextBrowser" name="text_browser">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>60</y>
-      <width>841</width>
-      <height>391</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QProgressBar" name="progressBar">
     <property name="geometry">
      <rect>
@@ -167,8 +163,27 @@
      </rect>
     </property>
     <property name="value">
-     <number>24</number>
+     <number>0</number>
     </property>
+   </widget>
+   <widget class="QTableWidget" name="table">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>60</y>
+      <width>841</width>
+      <height>391</height>
+     </rect>
+    </property>
+    <property name="showGrid">
+     <bool>true</bool>
+    </property>
+    <property name="columnCount">
+     <number>3</number>
+    </property>
+    <column/>
+    <column/>
+    <column/>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
@@ -176,8 +191,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>854</width>
-     <height>25</height>
+     <width>850</width>
+     <height>22</height>
     </rect>
    </property>
   </widget>

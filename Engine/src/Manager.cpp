@@ -12,7 +12,6 @@ Manager::Manager(QObject *parent) : QObject(parent)
     std::call_once( onceFlag, [ ]
     {
         qRegisterMetaType<PageLoader::Status>("PageLoader::Status");
-        qRegisterMetaType<size_t>("size_t");
         qRegisterMetaType<Manager::State>("Manager::State");
     } );
 }
@@ -22,14 +21,19 @@ Manager::~Manager()
     cleanUp();
 }
 
-void Manager::setMaxScannedLinks(size_t links)
+int Manager::getMaxScannedLinks() const
+{
+    return m_maxLinks;
+}
+
+void Manager::setMaxScannedLinks(int links)
 {
     m_maxLinks = links;
 }
 
 void Manager::setMaxThreadsCount(int threads)
 {
-    QThreadPool::globalInstance()->setMaxThreadCount(threads);
+    m_pool.setMaxThreadCount(10);
 }
 
 void Manager::start(const QString &startPage, const QString &strToFind)
@@ -37,22 +41,27 @@ void Manager::start(const QString &startPage, const QString &strToFind)
     qDebug() <<"start button pressed!\n";
     QMutexLocker locker(&m_queueMutex);
 
-    if (m_state != State::PAUSED) { //start again
-        // clear state
+    switch (m_state) {
+    case State::RUNNING:
+        m_state = State::PAUSED;
+        break;
+    case State::PAUSED:
+        m_state = State::RUNNING;
+        startHeadJob();
+        break;
+    default: //start again
+    {
+        m_state = State::RUNNING;
         cleanUp();
-
         m_strToFind = strToFind;
-
         PageLoader* firstItem = new PageLoader(startPage, m_strToFind, 0);
         QQueue<PageLoader*> zero;
         zero.enqueue(firstItem);
         m_grapth.push_back(zero);
         m_currentJobs = &m_grapth[0];
         startHeadJob();
-        m_state = State::RUNNING;
-    } else { // resume
-        m_state = State::RUNNING;
-        startHeadJob();
+    }
+        break;
     }
     emit stateChanged(m_state);
 }
@@ -65,21 +74,20 @@ void Manager::stop()
     emit stateChanged(m_state);
 }
 
-void Manager::threadFinished(PageLoader::Status status, QStringList urls, size_t id, int depth)
+void Manager::threadFinished(PageLoader::Status status, QStringList urls, int id, int depth)
 {
-    QMutexLocker locker(&m_queueMutex);
-    qDebug() <<"GOT URLS in main thread:";
     // Update status just downloaded page!
     emit updateItem(id, status);
 
-    if (m_state == State::RUNNING) {
+//    QMutexLocker locker(&m_queueMutex);
+    if (m_state != State::STOPPED) {
         if (status != PageLoader::Status::HTTP_ERROR) {
             if (m_grapth.size() <= depth + 1) {
                 m_grapth.push_back(QQueue<PageLoader*>());
             }
-
+            qDebug() << "adding " << urls.size() << "Urls";
             for (auto& it : urls) {
-                qDebug() << it;
+//                qDebug() << it;
                 m_grapth[depth + 1].enqueue(new PageLoader(it, m_strToFind, depth + 1));
             }
         }
@@ -89,17 +97,17 @@ void Manager::threadFinished(PageLoader::Status status, QStringList urls, size_t
 
         startHeadJob();
     }
+
 }
 
 void Manager::startHeadJob()
 {
-    if (m_currentJobs->isEmpty()) {
+    if (m_currentJobs->isEmpty() || m_state != State::RUNNING) {
         return;
     }
-    ++m_linkNum;
-    if (m_linkNum > m_maxLinks) {
+    if (m_linkNum >= m_maxLinks) {
         qDebug() << "End searching!";
-        QThreadPool::globalInstance()->clear();
+        m_pool.clear();
         m_state = State::FINISHED;
         emit stateChanged(m_state);
         return;
@@ -108,20 +116,23 @@ void Manager::startHeadJob()
     PageLoader* worker = m_currentJobs->dequeue();
     worker->setId(m_linkNum);
 
-    QObject::connect(worker, SIGNAL(pageLoaded(PageLoader::Status, QStringList, size_t, int)),
-                     this, SLOT(threadFinished(PageLoader::Status, QStringList, size_t, int)),
+    QObject::connect(worker, SIGNAL(pageLoaded(PageLoader::Status, QStringList, int, int)),
+                     this, SLOT(threadFinished(PageLoader::Status, QStringList, int, int)),
                      Qt::QueuedConnection);
-    // Notify that start download page!
-    emit addItem(worker->getUrl(), worker->getId());
+    // thread pool takes ownership of worker here!
+    if (!m_pool.tryStart(worker)) {
+        m_currentJobs->enqueue(worker);
+        qDebug() << "no free threads!!!!!!!!!!!!!!!!!!!!!!! ";
+    } else {
+        ++m_linkNum;
+        emit addItem(worker->getUrl(), worker->getId());
+    }
 
-    // thread puul takes ownership here!
-    QThreadPool::globalInstance()->start(worker);
 }
 
 void Manager::cleanUp()
 {
-    QThreadPool::globalInstance()->clear();
-    QThreadPool::globalInstance()->waitForDone(-1);
+    m_pool.clear();
     for(auto& works : m_grapth) {
         for(auto& work : works) {
             delete work;

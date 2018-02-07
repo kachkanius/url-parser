@@ -22,14 +22,15 @@ public:
 private:
     Ui::MainWindow *ui;
     Manager m_manager;
-    QMutex m_textMutex;
+    QMutex m_tableMutex;
 private:
-
+    void setupTable();
+    QString getStringStatus(PageLoader::Status st);
 private slots:
     void startButtonPressed();
     void stopButtonPressed();
-    void updateItem(size_t id,  PageLoader::Status status);
-    void addItem(QString url, size_t id);
+    void updateItem(int id,  PageLoader::Status status);
+    void addItem(QString url, int id);
     void updateUi(Manager::State newState);
 };
 

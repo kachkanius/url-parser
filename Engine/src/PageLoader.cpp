@@ -72,6 +72,7 @@ int PageLoader::getPage()
     }
     return httpStatus;
 }
+
 PageLoader::~PageLoader() {
     qDebug() << "~PageLoader()";
 }

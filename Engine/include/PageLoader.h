@@ -26,13 +26,13 @@ public:
 
     void run();
 signals:
-    void pageLoaded(PageLoader::Status status, QStringList urls, size_t id, int depth);
+    void pageLoaded(PageLoader::Status status, QStringList urls, int id, int depth);
 
 private:
     QUrl m_url;
     int m_depth;
     QString m_str;
-    size_t m_id;
+    int m_id;
 
     QByteArray m_body;
 private:
