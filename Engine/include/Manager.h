@@ -46,9 +46,10 @@ private:
     QQueue<PageLoader*>* m_currentJobs;
     QVector<QQueue<PageLoader*>> m_grapth;
     QMutex m_queueMutex;
-    QThreadPool m_pool;
-    int m_maxLinks;
-    int m_linkNum;
+    int m_maxLinksCount;
+    int m_linkCount;
+    int m_maxThreadsCount;
+    int m_activeThreads;
     QString m_strToFind;
     State m_state;
 };

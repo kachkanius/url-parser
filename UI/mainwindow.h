@@ -26,11 +26,13 @@ private:
 private:
     void setupTable();
     QString getStringStatus(PageLoader::Status st);
+    void addThread(int id);
+
 private slots:
     void startButtonPressed();
     void stopButtonPressed();
     void updateItem(int id,  PageLoader::Status status);
-    void addItem(QString url, int id);
+    void addItem(int id, QString url, PageLoader::Status st);
     void updateUi(Manager::State newState);
 };
 

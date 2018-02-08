@@ -5,8 +5,10 @@
 #include <QRunnable>
 #include <QObject>
 #include <QUrl>
+#include <QNetworkReply>
+#include <QWaitCondition>
 
-class PageLoader : public QObject, public QRunnable
+class PageLoader : public QObject
 {
 public:
     enum Status {
@@ -24,19 +26,27 @@ public:
     size_t getId() const;
     void setId(size_t id);
 
-    void run();
+public slots:
+        void start();
+
+private slots:
+    void httpFinish(QNetworkReply* reply);
+
 signals:
     void pageLoaded(PageLoader::Status status, QStringList urls, int id, int depth);
+    void loaded(int id,  QString URl, PageLoader::Status status);
 
+    void finished();
 private:
-    QUrl m_url;
+    QNetworkRequest m_request;
+    QString m_textToFind;
     int m_depth;
-    QString m_str;
     int m_id;
-
     QByteArray m_body;
+//    QNetworkAccessManager m_netwManager;
+
 private:
-    int getPage();
+//    int getPage();
 };
 
 #endif // PAGELOADER_H
