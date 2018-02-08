@@ -8,6 +8,7 @@
 #include <QVector>
 #include <QQueue>
 #include <QThreadPool>
+#include <QTimer>
 
 class Manager : public QObject
 {
@@ -33,19 +34,22 @@ public:
 
 signals:
     void updateItem(int id,  PageLoader::Status status);
-    void addItem(QString url, int id);
+    void addItem(QString url);
     void stateChanged(Manager::State state);
 
 private slots:
-    void threadFinished(PageLoader::Status status, QStringList urls, int id, int depth);
+    void threadFinished(int id, PageLoader::Status status, QStringList urls, int depth);
 
 private:
     void startHeadJob();
     void cleanUp();
+    void setState(State state);
 private:
     QQueue<PageLoader*>* m_currentJobs;
     QVector<QQueue<PageLoader*>> m_grapth;
     QMutex m_queueMutex;
+    QTimer m_timer;
+
     int m_maxLinksCount;
     int m_linkCount;
     int m_maxThreadsCount;

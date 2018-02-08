@@ -23,30 +23,24 @@ public:
     ~PageLoader();
 
     QString getUrl() const;
-    size_t getId() const;
-    void setId(size_t id);
+    int getId() const;
+    void setId(int newId);
 
 public slots:
-        void start();
+    void start();
 
 private slots:
-    void httpFinish(QNetworkReply* reply);
+    void requestEnd(QNetworkReply* reply);
+    void networkError(QNetworkReply::NetworkError);
 
 signals:
-    void pageLoaded(PageLoader::Status status, QStringList urls, int id, int depth);
-    void loaded(int id,  QString URl, PageLoader::Status status);
-
-    void finished();
+    void pageLoaded(int id, PageLoader::Status status, QStringList urls, int depth);
 private:
     QNetworkRequest m_request;
     QString m_textToFind;
     int m_depth;
     int m_id;
-    QByteArray m_body;
-//    QNetworkAccessManager m_netwManager;
-
-private:
-//    int getPage();
+    QNetworkAccessManager m_netwManager;
 };
 
 #endif // PAGELOADER_H

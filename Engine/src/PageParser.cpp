@@ -21,15 +21,12 @@ QStringList PageParser::getUrls()
     while (iter.hasNext()) {
         QRegularExpressionMatch href_match = iter.next();
         QString href_tag = href_match.captured(0);
-//        qDebug()<< "a tag: " << href_tag;
         QRegularExpression link_exp(HREF_TAG_PATTERN);
         QRegularExpressionMatch link_match = link_exp.match(href_tag);
         if (link_match.hasMatch()) {
             QString link_str = link_match.captured(1);
-//            qDebug() << "link: " << link_str;
             links_list.append(link_str);
         }
-//        qDebug() << "\n";
     }
     return links_list;
 }

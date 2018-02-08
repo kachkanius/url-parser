@@ -26,14 +26,15 @@ private:
 private:
     void setupTable();
     QString getStringStatus(PageLoader::Status st);
+    // remove this
     void addThread(int id);
 
 private slots:
     void startButtonPressed();
     void stopButtonPressed();
-    void updateItem(int id,  PageLoader::Status status);
-    void addItem(int id, QString url, PageLoader::Status st);
-    void updateUi(Manager::State newState);
+    void onAddItem(QString url);
+    void onUpdateItem(int id,  PageLoader::Status status);
+    void onStateChanged(Manager::State newState);
 };
 
 #endif // MAINWINDOW_H
