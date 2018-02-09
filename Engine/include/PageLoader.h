@@ -15,7 +15,8 @@ public:
         LOADING = 0,
         FOUND = 1,
         NOT_FOUND = 2,
-        HTTP_ERROR = 3
+        HTTP_ERROR = 3,
+        HTTP_NO_TEXT = 4
     };
     Q_OBJECT
 public:

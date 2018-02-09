@@ -23,6 +23,7 @@ private:
     Ui::MainWindow *ui;
     Manager m_manager;
     QMutex m_tableMutex;
+    int m_finishedItemsCount;
 private:
     void setupTable();
     QString getStringStatus(PageLoader::Status st);

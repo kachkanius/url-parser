@@ -27,6 +27,7 @@ public:
 
     void setMaxScannedLinks(int links);
     int getMaxScannedLinks() const;
+    int getScannedLinks();
     void setMaxThreadsCount(int threads);
 
     void start(const QString& startPage, const QString& strToFind);
@@ -39,23 +40,26 @@ signals:
 
 private slots:
     void threadFinished(int id, PageLoader::Status status, QStringList urls, int depth);
-
 private:
     void startHeadJob();
     void cleanUp();
     void setState(State state);
 private:
-    QQueue<PageLoader*>* m_currentJobs;
-    QVector<QQueue<PageLoader*>> m_grapth;
+    struct Job {
+        QString url;
+        int depth;
+        Job(const QString& url_, int depth_):url(url_), depth(depth_) {}
+    };
+    QQueue<Job>* m_currentJobs;
+    QVector<QQueue<Job>> m_grapth;
     QMutex m_queueMutex;
-    QTimer m_timer;
-
     int m_maxLinksCount;
     int m_linkCount;
     int m_maxThreadsCount;
     int m_activeThreads;
     QString m_strToFind;
     State m_state;
+    QTimer m_timer;
 };
 
 #endif // MANAGER_H

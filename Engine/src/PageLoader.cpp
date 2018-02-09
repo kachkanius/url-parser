@@ -48,15 +48,24 @@ void PageLoader::requestEnd(QNetworkReply *reply)
     QStringList urls;
 
     int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    qDebug() << "httpFinish(" << reply->url().toString() << ") status " << httpStatus;
+    QString contentType = QString(reply->rawHeader("Content-Type"));
+    qDebug() << "httpFinish(" << reply->url().toString() << ") status " << httpStatus
+             << " Type: "<<  contentType;
+
     if (httpStatus == 200) // OK
     {
-        operationStatus = NOT_FOUND;
-        QString body = QString(reply->readAll());
-        PageParser parser(body);
-        urls = parser.getUrls();
-        if (parser.containsStr(m_textToFind)) {
-            operationStatus = FOUND;
+        if (contentType.contains("text"))
+        {
+            operationStatus = NOT_FOUND;
+            QString body = QString(reply->readAll());
+            PageParser parser(body);
+            urls = parser.getUrls();
+            if (parser.containsStr(m_textToFind)) {
+                operationStatus = FOUND;
+            }}
+        else {
+            qDebug() << "Don't have text!";
+            operationStatus = HTTP_NO_TEXT;
         }
     } else if (httpStatus == 301 || httpStatus == 302)  // Moved
     {

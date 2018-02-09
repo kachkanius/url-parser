@@ -17,8 +17,6 @@ Manager::Manager(QObject *parent) : QObject(parent)
         qRegisterMetaType<PageLoader::Status>("PageLoader::Status");
         qRegisterMetaType<Manager::State>("Manager::State");
     } );
-
-//    connect(&m_timer, SIGNAL(timeout()), this, SLOT(update()));
 }
 
 Manager::~Manager()
@@ -29,6 +27,11 @@ Manager::~Manager()
 int Manager::getMaxScannedLinks() const
 {
     return m_maxLinksCount;
+}
+
+int Manager::getScannedLinks()
+{
+    return m_linkCount;
 }
 
 void Manager::setMaxScannedLinks(int links)
@@ -60,14 +63,15 @@ void Manager::start(const QString &startPage, const QString &strToFind)
         setState(State::RUNNING);
         cleanUp();
         m_strToFind = strToFind;
-        PageLoader* firstItem = new PageLoader(startPage, m_strToFind, 0);
-        QQueue<PageLoader*> zero;
-        zero.enqueue(firstItem);
-        m_grapth.push_back(zero);
+        Job firstItem(startPage, 0);
+        QQueue<Job> zeroLevel;
+        zeroLevel.enqueue(firstItem);
+        m_grapth.push_back(zeroLevel);
         m_currentJobs = &m_grapth[0];
         startHeadJob();
-    }
         break;
+    }
+
     }
 }
 
@@ -77,45 +81,31 @@ void Manager::stop()
     setState(State::STOPPED);
     cleanUp();
 }
-static QString StatusToStr(PageLoader::Status st)
-{
-    switch (st) {
-    case PageLoader::Status::FOUND:
-        return "FOUND!";
-        break;
-    case PageLoader::Status::HTTP_ERROR:
-        return "Http Error";
-        break;
-    case PageLoader::Status::NOT_FOUND:
-        return "Not found";
-        break;
-    case PageLoader::Status::LOADING:
-    default:
-        return "Loading...";
-    }
-}
+
 
 void Manager::threadFinished(int id, PageLoader::Status status, QStringList urls, int depth)
 {
     QMutexLocker locker(&m_queueMutex);
-    qDebug() << "Manager::threadFinished (" << id << ") status: " << StatusToStr(status);
+    qDebug() << "Manager::threadFinished (" << id << ") status: " << status;
     emit updateItem(id, status);
     --m_activeThreads;
 
     if (m_state != State::STOPPED) {
         if (m_grapth.size() <= depth + 1) {
-            m_grapth.push_back(QQueue<PageLoader*>());
+            m_grapth.push_back(QQueue<Job>());
         }
         for (auto& it : urls) {
-            m_grapth[depth + 1].enqueue(new PageLoader(it, m_strToFind, depth + 1));
+            m_grapth[depth + 1].enqueue(Job(it,depth + 1));
         }
         qDebug() << urls.size() << "urls were added.";
 
         if (m_currentJobs->empty() && m_grapth.size() > depth) {
             m_currentJobs = &m_grapth[depth + 1];
         }
-        while(m_activeThreads < m_maxThreadsCount && m_state == State::RUNNING) {
-            startHeadJob();
+        if (m_state == State::RUNNING) {
+            for (int i = 0; i < (m_maxThreadsCount - m_activeThreads) && (!m_currentJobs->empty()); ++i) {
+                startHeadJob();
+            }
         }
     }
 }
@@ -125,11 +115,6 @@ void Manager::startHeadJob()
     if (m_state != State::RUNNING) {
         qDebug() << "Paused.";
         return;
-    }
-
-    if (m_activeThreads >= m_maxThreadsCount) {
-        qDebug() << "Sorry, no threads avalible.";
-        return ;
     }
 
     if (m_linkCount >= m_maxLinksCount) {
@@ -144,14 +129,14 @@ void Manager::startHeadJob()
         return;
     }
 
-    PageLoader* worker = m_currentJobs->dequeue();
-
-    // Update UI
-    emit addItem(worker->getUrl());
-
+    Job job = m_currentJobs->dequeue();
+    PageLoader* worker = new PageLoader(job.url, m_strToFind, job.depth);
     worker->setId(m_linkCount);
     ++m_linkCount;
     ++m_activeThreads;
+
+    // Update UI
+    emit addItem(job.url);
 
     // Notify Manager that loading done
     connect(worker, SIGNAL(pageLoaded(int, PageLoader::Status, QStringList, int)),
@@ -162,11 +147,6 @@ void Manager::startHeadJob()
 
 void Manager::cleanUp()
 {
-    for(auto& works : m_grapth) {
-        for(auto& work : works) {
-            delete work;
-        }
-    }
     m_grapth.clear();
     m_linkCount = 0;
 }

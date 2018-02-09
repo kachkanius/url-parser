@@ -21,7 +21,8 @@
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    m_finishedItemsCount(0)
 {
     ui->setupUi(this);
 
@@ -70,6 +71,9 @@ QString MainWindow::getStringStatus(PageLoader::Status st)
     case PageLoader::Status::NOT_FOUND:
         return "Not found";
         break;
+    case PageLoader::Status::HTTP_NO_TEXT:
+        return "Not a text";
+        break;
     case PageLoader::Status::LOADING:
     default:
         return "Loading...";
@@ -86,6 +90,7 @@ void MainWindow::startButtonPressed() {
 void MainWindow::stopButtonPressed()
 {
     m_manager.stop();
+    m_finishedItemsCount = 0;
 }
 
 void MainWindow::onUpdateItem(int id, PageLoader::Status status)
@@ -93,12 +98,12 @@ void MainWindow::onUpdateItem(int id, PageLoader::Status status)
     QMutexLocker locker(&m_tableMutex);
     if (ui->table->rowCount() > id)
     {
+        ++m_finishedItemsCount;
         //The table takes ownership of the item.
         ui->table->setItem(id, 1,  new QTableWidgetItem(getStringStatus(status)));
         if (status != PageLoader::Status::LOADING) {
-            // TODO: SEt progress here!!!
-//            int progress = ((id +1)* 100) / m_manager.getMaxScannedLinks();
-//            ui->progressBar->setValue(progress);
+            int progress = ((m_finishedItemsCount)* 100) / m_manager.getMaxScannedLinks();
+            ui->progressBar->setValue(progress);
         }
     }
 }
@@ -119,7 +124,8 @@ void MainWindow::onStateChanged(Manager::State newState)
     case Manager::State::STOPPED:        
         ui->table->setRowCount(0);
         ui->progressBar->setValue(0);
-    case Manager::State::FINISHED:
+        m_finishedItemsCount = 0;
+   case Manager::State::FINISHED:
         ui->button_start->setText("Start");
         ui->edit_max_urls->setEnabled(true);
         ui->edit_start_url->setEnabled(true);
