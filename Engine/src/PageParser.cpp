@@ -31,12 +31,12 @@ QStringList PageParser::getUrls()
     return links_list;
 }
 
-size_t PageParser::findStr(const QString &str)
+int PageParser::findStr(const QString &str)
 {
     return m_html.count(str, Qt::CaseInsensitive);
 }
 
-bool PageParser::containsStr(const QString &str)
+bool PageParser::containsStr(const QString &str, bool caseSensitive = false)
 {
-    return m_html.contains(str, Qt::CaseInsensitive);
+    return m_html.contains(str, caseSensitive ? Qt::CaseSensitive : Qt::CaseInsensitive);
 }

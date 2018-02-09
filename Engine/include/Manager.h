@@ -7,8 +7,7 @@
 #include <QString>
 #include <QVector>
 #include <QQueue>
-#include <QThreadPool>
-#include <QTimer>
+
 
 class Manager : public QObject
 {
@@ -18,7 +17,8 @@ public:
         STOPPED,
         RUNNING,
         PAUSED,
-        FINISHED
+        FINISHED,
+        WAITING
     };
 
     explicit Manager(QObject *parent = nullptr);
@@ -30,18 +30,19 @@ public:
     int getScannedLinks();
     void setMaxThreadsCount(int threads);
 
-    void start(const QString& startPage, const QString& strToFind);
+    void start(const QString& startPage, bool caseSensitive, const QString& strToFind);
     void stop();
 
 signals:
     void updateItem(int id,  PageLoader::Status status);
     void addItem(QString url);
     void stateChanged(Manager::State state);
+    void stopAllThreads();
 
 private slots:
     void threadFinished(int id, PageLoader::Status status, QStringList urls, int depth);
 private:
-    void startHeadJob();
+    bool startHeadJob();
     void cleanUp();
     void setState(State state);
 private:
@@ -58,8 +59,8 @@ private:
     int m_maxThreadsCount;
     int m_activeThreads;
     QString m_strToFind;
+    bool m_caseSensitive;
     State m_state;
-    QTimer m_timer;
 };
 
 #endif // MANAGER_H

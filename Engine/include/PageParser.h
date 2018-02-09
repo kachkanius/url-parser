@@ -9,8 +9,8 @@ class PageParser
 public:
     PageParser(const QString& html);
     QStringList getUrls();
-    size_t findStr(const QString& str);
-    bool  containsStr(const QString& str);
+    int findStr(const QString& str);
+    bool  containsStr(const QString& str, bool caseSensitive);
 private:
     QString m_html;
 };

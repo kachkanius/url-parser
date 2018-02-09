@@ -2,9 +2,6 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-//#include <PageLoader.h>
-//#include <QMutex>
-
 #include <Manager.h>
 
 namespace Ui {
@@ -27,8 +24,7 @@ private:
 private:
     void setupTable();
     QString getStringStatus(PageLoader::Status st);
-    // remove this
-    void addThread(int id);
+    void lockUi(bool locked);
 
 private slots:
     void startButtonPressed();

@@ -1,6 +1,5 @@
 #include "Manager.h"
 #include <QDebug>
-#include <QThreadPool>
 #include <mutex>
 
 Manager::Manager(QObject *parent) : QObject(parent)
@@ -8,8 +7,8 @@ Manager::Manager(QObject *parent) : QObject(parent)
   , m_linkCount(0)
   , m_maxThreadsCount(1)
   , m_activeThreads(0)
+  , m_caseSensitive(false)
   , m_state(State::STOPPED)
-  , m_timer(this)
 {
     static std::once_flag onceFlag;
     std::call_once( onceFlag, [ ]
@@ -44,7 +43,7 @@ void Manager::setMaxThreadsCount(int threads)
     m_maxThreadsCount = threads;
 }
 
-void Manager::start(const QString &startPage, const QString &strToFind)
+void Manager::start(const QString &startPage, bool caseSensitive, const QString &strToFind)
 {
     qDebug() <<"start button pressed!\n";
     QMutexLocker locker(&m_queueMutex);
@@ -52,6 +51,8 @@ void Manager::start(const QString &startPage, const QString &strToFind)
     switch (m_state) {
     case State::RUNNING: // Pause
         setState(State::PAUSED);
+        break;
+    case State::WAITING:
         break;
     case State::PAUSED: // Resume
         setState(State::RUNNING);
@@ -63,6 +64,7 @@ void Manager::start(const QString &startPage, const QString &strToFind)
         setState(State::RUNNING);
         cleanUp();
         m_strToFind = strToFind;
+        m_caseSensitive = caseSensitive;
         Job firstItem(startPage, 0);
         QQueue<Job> zeroLevel;
         zeroLevel.enqueue(firstItem);
@@ -80,6 +82,7 @@ void Manager::stop()
     QMutexLocker locker(&m_queueMutex);
     setState(State::STOPPED);
     cleanUp();
+    emit stopAllThreads();
 }
 
 
@@ -103,34 +106,38 @@ void Manager::threadFinished(int id, PageLoader::Status status, QStringList urls
             m_currentJobs = &m_grapth[depth + 1];
         }
         if (m_state == State::RUNNING) {
-            for (int i = 0; i < (m_maxThreadsCount - m_activeThreads) && (!m_currentJobs->empty()); ++i) {
-                startHeadJob();
+            for (int i = 0; i <= (m_maxThreadsCount - m_activeThreads); ++i)
+            {
+                if (!startHeadJob())
+                {
+                    break;
+                }
             }
+
+        } else if ((m_state == State::WAITING) && (m_activeThreads == 0))
+        {
+            qDebug() << "No jobs, finish.";
+            setState(State::FINISHED);
+            return;
         }
     }
 }
 
-void Manager::startHeadJob()
+bool Manager::startHeadJob()
 {
-    if (m_state != State::RUNNING) {
-        qDebug() << "Paused.";
-        return;
-    }
-
     if (m_linkCount >= m_maxLinksCount) {
         qDebug() << "End searching!";
-        setState(State::FINISHED);
-        return;
+        setState(State::WAITING);
+        return false;
     }
 
-    if (m_currentJobs->isEmpty() && m_activeThreads == 0) {
-        qDebug() << "No Urls any more, finish.";
-        setState(State::FINISHED);
-        return;
+    if (m_state != State::RUNNING || m_currentJobs->empty())
+    {
+        return false;
     }
 
     Job job = m_currentJobs->dequeue();
-    PageLoader* worker = new PageLoader(job.url, m_strToFind, job.depth);
+    PageLoader* worker = new PageLoader(job.url, m_strToFind, m_caseSensitive, job.depth);
     worker->setId(m_linkCount);
     ++m_linkCount;
     ++m_activeThreads;
@@ -142,7 +149,11 @@ void Manager::startHeadJob()
     connect(worker, SIGNAL(pageLoaded(int, PageLoader::Status, QStringList, int)),
             this, SLOT(threadFinished(int, PageLoader::Status, QStringList, int)));
 
+    // Notify Manager that loading done
+    connect(this, SIGNAL(stopAllThreads()), worker, SLOT(stop()));
+
     worker->start();
+    return true;
 }
 
 void Manager::cleanUp()

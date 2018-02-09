@@ -1,23 +1,9 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QDebug>
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkRequest>
-#include <QtNetwork/QNetworkReply>
-#include <QFile>
-#include <QRunnable>
-#include <QThread>
-
-#include <QThreadPool>
-#include <QQueue>
-#include <QTimer>
 
 #include <PageParser.h>
 #include <PageLoader.h>
-
-#include <QMutex>
-#include <QMutexLocker>
-#include <QLayout>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -56,14 +42,14 @@ void MainWindow::setupTable()
     ui->table->setHorizontalHeaderLabels(headerLabels);
     ui->table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeMode::Stretch);
     ui->table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeMode::Fixed);
-    ui->table->setColumnWidth(1, 100);
+    ui->table->setColumnWidth(1, 150);
 }
 
 QString MainWindow::getStringStatus(PageLoader::Status st)
 {
     switch (st) {
     case PageLoader::Status::FOUND:
-        return "FOUND!";
+        return "Found!";
         break;
     case PageLoader::Status::HTTP_ERROR:
         return "Http Error";
@@ -80,11 +66,20 @@ QString MainWindow::getStringStatus(PageLoader::Status st)
     }
 }
 
+void MainWindow::lockUi(bool locked)
+{
+    ui->edit_max_urls->setEnabled(locked);
+    ui->edit_start_url->setEnabled(locked);
+    ui->edit_text_to_find->setEnabled(locked);
+    ui->edit_threads_num->setEnabled(locked);
+    ui->caseSensitive->setEnabled(locked);
+}
+
 
 void MainWindow::startButtonPressed() {    
     m_manager.setMaxScannedLinks(ui->edit_max_urls->text().toInt());
     m_manager.setMaxThreadsCount(ui->edit_threads_num->text().toInt());
-    m_manager.start(ui->edit_start_url->text(), ui->edit_text_to_find->text());
+    m_manager.start(ui->edit_start_url->text(), ui->caseSensitive->isChecked(), ui->edit_text_to_find->text());
 }
 
 void MainWindow::stopButtonPressed()
@@ -120,31 +115,31 @@ void MainWindow::onAddItem(QString url)
 
 void MainWindow::onStateChanged(Manager::State newState)
 {
+
     switch (newState) {
-    case Manager::State::STOPPED:        
+    case Manager::State::STOPPED:
+        ui->button_start->setText("Start");
         ui->table->setRowCount(0);
         ui->progressBar->setValue(0);
         m_finishedItemsCount = 0;
    case Manager::State::FINISHED:
+        lockUi(true);
         ui->button_start->setText("Start");
-        ui->edit_max_urls->setEnabled(true);
-        ui->edit_start_url->setEnabled(true);
-        ui->edit_text_to_find->setEnabled(true);
-        ui->edit_threads_num->setEnabled(true);
+        break;
+    case Manager::State::WAITING:
+        lockUi(false);
+        ui->button_start->setText("Pause");
+        ui->button_start->setEnabled(false);
         break;
     case Manager::State::RUNNING:
+        lockUi(false);
         ui->button_start->setText("Pause");
-        ui->edit_max_urls->setEnabled(false);
-        ui->edit_start_url->setEnabled(false);
-        ui->edit_text_to_find->setEnabled(false);
-        ui->edit_threads_num->setEnabled(false);
+        ui->button_start->setEnabled(true);
         break;
     case Manager::State::PAUSED:
+        lockUi(false);
         ui->button_start->setText("Resume");
-        ui->edit_max_urls->setEnabled(false);
-        ui->edit_start_url->setEnabled(false);
-        ui->edit_text_to_find->setEnabled(false);
-        ui->edit_threads_num->setEnabled(false);
+        ui->button_start->setEnabled(true);
         break;
     default:
         break;
