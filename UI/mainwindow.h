@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QMovie>
 #include <Manager.h>
+#include <QKeyEvent>
 
 namespace Ui {
 class MainWindow;
@@ -16,7 +17,7 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-
+    void keyPressEvent(QKeyEvent * event);
 private:
     Ui::MainWindow *ui;
     QMovie *m_loadingMovie;
