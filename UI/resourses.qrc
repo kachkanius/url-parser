@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/images">
+        <file alias="loader.gif">images/loader.gif</file>
+    </qresource>
+</RCC>

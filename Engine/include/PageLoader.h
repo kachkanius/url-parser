@@ -33,7 +33,7 @@ private slots:
     void requestEnd(QNetworkReply* reply);
     void networkError(QNetworkReply::NetworkError);
 signals:
-    void pageLoaded(int id, PageLoader::Status status, QStringList urls, int depth);
+    void pageLoaded(int id, PageLoader::Status status, QString err, QStringList urls, int depth);
     void cancelDownloading();
 private:
     QNetworkRequest m_request;

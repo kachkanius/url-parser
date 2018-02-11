@@ -86,11 +86,11 @@ void Manager::stop()
 }
 
 
-void Manager::threadFinished(int id, PageLoader::Status status, QStringList urls, int depth)
+void Manager::threadFinished(int id, PageLoader::Status status, QString err, QStringList urls, int depth)
 {
     QMutexLocker locker(&m_queueMutex);
     qDebug() << "Manager::threadFinished (" << id << ") status: " << status;
-    emit updateItem(id, status);
+    emit updateItem(id, status, err);
     --m_activeThreads;
 
     if (m_state != State::STOPPED) {
@@ -116,7 +116,7 @@ void Manager::threadFinished(int id, PageLoader::Status status, QStringList urls
 
         } else if ((m_state == State::WAITING) && (m_activeThreads == 0))
         {
-            qDebug() << "No jobs, finish.";
+            qDebug() << "All threads finished, finish.";
             setState(State::FINISHED);
             return;
         }
@@ -131,8 +131,10 @@ bool Manager::startHeadJob()
         return false;
     }
 
-    if (m_state != State::RUNNING || m_currentJobs->empty())
+    if (m_state == State::RUNNING && m_currentJobs->empty())
     {
+        qDebug() << "No jobs any more!";
+        setState(State::FINISHED);
         return false;
     }
 
@@ -146,8 +148,8 @@ bool Manager::startHeadJob()
     emit addItem(job.url);
 
     // Notify Manager that loading done
-    connect(worker, SIGNAL(pageLoaded(int, PageLoader::Status, QStringList, int)),
-            this, SLOT(threadFinished(int, PageLoader::Status, QStringList, int)));
+    connect(worker, SIGNAL(pageLoaded(int, PageLoader::Status, QString, QStringList, int)),
+            this, SLOT(threadFinished(int, PageLoader::Status, QString, QStringList, int)));
 
     // Notify Manager that loading done
     connect(this, SIGNAL(stopAllThreads()), worker, SLOT(stop()));
@@ -164,6 +166,7 @@ void Manager::cleanUp()
 
 void Manager::setState(Manager::State state)
 {
+    qDebug() << "state: "<< (int)state;
     m_state = state;
     emit stateChanged(m_state);
 }

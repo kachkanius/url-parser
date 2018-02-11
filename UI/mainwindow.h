@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QMovie>
 #include <Manager.h>
 
 namespace Ui {
@@ -18,19 +19,20 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    QMovie *m_loadingMovie;
     Manager m_manager;
     QMutex m_tableMutex;
     int m_finishedItemsCount;
 private:
     void setupTable();
-    QString getStringStatus(PageLoader::Status st);
-    void lockUi(bool locked);
+    QString getStringStatus(PageLoader::Status st, QString err = "");
+    void updateUi(bool enabled);
 
 private slots:
     void startButtonPressed();
     void stopButtonPressed();
     void onAddItem(QString url);
-    void onUpdateItem(int id,  PageLoader::Status status);
+    void onUpdateItem(int id,  PageLoader::Status status, QString err);
     void onStateChanged(Manager::State newState);
 };
 

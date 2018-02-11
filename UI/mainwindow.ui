@@ -52,8 +52,13 @@
       <x>650</x>
       <y>460</y>
       <width>99</width>
-      <height>21</height>
+      <height>31</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>Start</string>
@@ -65,8 +70,13 @@
       <x>750</x>
       <y>460</y>
       <width>99</width>
-      <height>21</height>
+      <height>31</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>Stop</string>
@@ -158,9 +168,14 @@
      <rect>
       <x>10</x>
       <y>460</y>
-      <width>631</width>
-      <height>21</height>
+      <width>591</width>
+      <height>31</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
     </property>
     <property name="value">
      <number>0</number>
@@ -194,8 +209,27 @@
       <height>31</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <pointsize>11</pointsize>
+      <kerning>true</kerning>
+     </font>
+    </property>
     <property name="text">
      <string>Case sensitive</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="loading_bar">
+    <property name="geometry">
+     <rect>
+      <x>610</x>
+      <y>460</y>
+      <width>41</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
     </property>
    </widget>
   </widget>

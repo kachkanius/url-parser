@@ -14,11 +14,11 @@ class Manager : public QObject
     Q_OBJECT
 public:
     enum class State {
-        STOPPED,
-        RUNNING,
-        PAUSED,
-        FINISHED,
-        WAITING
+        STOPPED = 0,
+        RUNNING = 1,
+        PAUSED = 2,
+        FINISHED = 3,
+        WAITING = 4
     };
 
     explicit Manager(QObject *parent = nullptr);
@@ -34,13 +34,13 @@ public:
     void stop();
 
 signals:
-    void updateItem(int id,  PageLoader::Status status);
+    void updateItem(int id,  PageLoader::Status status, QString err);
     void addItem(QString url);
     void stateChanged(Manager::State state);
     void stopAllThreads();
 
 private slots:
-    void threadFinished(int id, PageLoader::Status status, QStringList urls, int depth);
+    void threadFinished(int id, PageLoader::Status status, QString err, QStringList urls, int depth);
 private:
     bool startHeadJob();
     void cleanUp();
