@@ -2,6 +2,7 @@
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkRequest>
 #include <QtNetwork/QNetworkReply>
+#include <mutex>
 
 PageLoader::PageLoader(const QString &sUrl, const QString &text, bool caseSensitive, int depth)
     : m_request(QUrl(sUrl))
@@ -12,12 +13,15 @@ PageLoader::PageLoader(const QString &sUrl, const QString &text, bool caseSensit
     , m_caseSensitive(caseSensitive)
 {
     m_request.setRawHeader("User-Agent", "Mozilla/5.0 (Android; Mobile; rv:40.0) Gecko/40.0 Firefox/40.0");
-    m_request.setRawHeader("Accept", "text/*");
-    m_request.setRawHeader("Accept-Charset", "utf-8");
     // download only small pages up to 10 MB
     m_request.setRawHeader("Range", "bytes=0-10485760");
 
     connect(&m_netwManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(requestEnd(QNetworkReply*)));
+    static std::once_flag onceFlag;
+    std::call_once( onceFlag, [ ]
+    {
+        qRegisterMetaType<PageLoader::Status>("PageLoader::Status");
+    } );
 }
 
 QString PageLoader::getUrl() const
@@ -49,7 +53,6 @@ void PageLoader::start()
 
 void PageLoader::stop()
 {
-    qDebug() << "PageLoader::stop(" << m_request.url().toString() <<")";
     emit cancelDownloading();
 }
 
@@ -57,29 +60,29 @@ void PageLoader::requestEnd(QNetworkReply *reply)
 {
     if (m_isActive)
     {
-        PageLoader::Status operationStatus = HTTP_ERROR;
+        PageLoader::Status operationStatus = Status::HTTP_ERROR;
         QStringList urls;
 
         int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         QString contentType = QString(reply->rawHeader("Content-Type"));
         qDebug() << "httpFinish(" << reply->url().toString() << ") status " << httpStatus
                  << " Type: "<<  contentType;
-qDebug() << "error: " <<reply->errorString();
 
         if (httpStatus == 200 || httpStatus == 206) // OK
         {
             if (contentType.contains("text"))
             {
-                operationStatus = NOT_FOUND;
+                operationStatus = Status::NOT_FOUND;
                 QString body = QString(reply->readAll());
                 PageParser parser(body);
                 urls = parser.getUrls();
                 if (parser.containsStr(m_textToFind, m_caseSensitive)) {
-                    operationStatus = FOUND;
-                }}
+                    operationStatus = Status::FOUND;
+                }
+            }
             else {
                 qDebug() << "Don't have text!";
-                operationStatus = HTTP_NO_TEXT;
+                operationStatus = Status::HTTP_NO_TEXT;
             }
         } else if (httpStatus == 301 || httpStatus == 302)  // Moved
         {
@@ -88,12 +91,11 @@ qDebug() << "error: " <<reply->errorString();
             start();
             return;
         }
-        // remove url name from error description
+        // Remove url name from error description
         QString errr = reply->errorString();
         QString url = reply->url().toString();
         int pos = url.indexOf("://", 0);
         url.remove(0, pos + 3);
-        qDebug() << "URL: " <<url;
         errr.replace(url, "");
 
         emit pageLoaded(m_id, operationStatus, errr, urls, m_depth);

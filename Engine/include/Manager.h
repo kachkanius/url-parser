@@ -13,14 +13,14 @@ class Manager : public QObject
 {
     Q_OBJECT
 public:
-    enum class State {
+    enum class State : int {
         STOPPED = 0,
         RUNNING = 1,
         PAUSED = 2,
         FINISHED = 3,
         WAITING = 4
     };
-
+    Q_ENUM(State)
     explicit Manager(QObject *parent = nullptr);
 
     ~Manager();

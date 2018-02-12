@@ -13,7 +13,6 @@ Manager::Manager(QObject *parent) : QObject(parent)
     static std::once_flag onceFlag;
     std::call_once( onceFlag, [ ]
     {
-        qRegisterMetaType<PageLoader::Status>("PageLoader::Status");
         qRegisterMetaType<Manager::State>("Manager::State");
     } );
 }
@@ -82,7 +81,6 @@ void Manager::stop()
     QMutexLocker locker(&m_queueMutex);
     setState(State::STOPPED);
     cleanUp();
-    emit stopAllThreads();
 }
 
 
@@ -162,6 +160,7 @@ void Manager::cleanUp()
 {
     m_grapth.clear();
     m_linkCount = 0;
+    emit stopAllThreads();
 }
 
 void Manager::setState(Manager::State state)

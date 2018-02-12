@@ -1,5 +1,5 @@
-#ifndef ENGINETESTS_H
-#define ENGINETESTS_H
+#ifndef PAGEPARSERTESTS_H
+#define PAGEPARSERTESTS_H
 
 #include <QObject>
 
@@ -22,4 +22,4 @@ private:
 
 };
 
-#endif // ENGINETESTS_H
+#endif // PAGEPARSERTESTS_H

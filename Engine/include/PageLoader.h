@@ -9,13 +9,15 @@
 class PageLoader : public QObject
 {
 public:
-    enum Status {
+    enum class Status: int {
         LOADING = 0,
         FOUND = 1,
         NOT_FOUND = 2,
         HTTP_ERROR = 3,
         HTTP_NO_TEXT = 4
     };
+    Q_ENUM(Status)
+
     Q_OBJECT
 public:
     PageLoader(const QString& sUrl, const QString& text, bool caseSensitive, int depth);

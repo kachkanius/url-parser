@@ -125,7 +125,7 @@ void MainWindow::onAddItem(QString url)
     ui->table->insertRow(row);
     //The table takes ownership of the item.
     ui->table->setItem(row, 0, new QTableWidgetItem(url));
-    ui->table->setItem(row, 1, new QTableWidgetItem(getStringStatus(PageLoader::LOADING)));
+    ui->table->setItem(row, 1, new QTableWidgetItem(getStringStatus(PageLoader::Status::LOADING)));
 }
 
 void MainWindow::onStateChanged(Manager::State newState)

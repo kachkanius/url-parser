@@ -17,10 +17,12 @@ INCLUDEPATH += include \
                 $$PWD/../Engine/include
 
 SOURCES += main.cpp \
-           PageParserTest.cpp
+           PageParserTest.cpp \
+    PageLoaderTest.cpp
 
 HEADERS  +=  \
-           PageParserTest.h
+           PageParserTest.h \
+    PageLoaderTest.h
 
 LIBS += -L$$PWD/../build/Engine -lwtf_engine
 
