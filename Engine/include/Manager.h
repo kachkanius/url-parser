@@ -13,7 +13,7 @@ class Manager : public QObject
 {
     Q_OBJECT
 public:
-    // states of manager
+    // states of manager( Simplest realisation of state-machine)
     enum class State : int {
         STOPPED = 0, // Initial state. Do nothing.
         RUNNING = 1, //  Iterate over graph and go link by link.

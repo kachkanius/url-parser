@@ -155,6 +155,7 @@ bool Manager::startHeadJob()
     }
 
     Job job = m_currentJobs->dequeue();
+    // PageLoader works works asynchronously, so we do't create thread-pool here.
     // PageLoader will be deleted automatcly at the end of operation by calling deleteLater();
     PageLoader* worker = new PageLoader(job.url, m_strToFind, m_caseSensitive, job.depth);
     worker->setId(m_linkCount);
