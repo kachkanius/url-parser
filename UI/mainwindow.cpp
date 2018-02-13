@@ -24,7 +24,6 @@ MainWindow::MainWindow(QWidget *parent) :
     m_loadingMovie = new QMovie(":/images/loader.gif");
     ui->loading_bar->setMovie(m_loadingMovie);
     ui->loading_bar->show();
-//    m_loadingMovie->start();
 
     connect(ui->button_start, SIGNAL (released()), this, SLOT (startButtonPressed()));
     connect(ui->button_stop, SIGNAL (released()), this, SLOT (stopButtonPressed()));

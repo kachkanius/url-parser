@@ -17,6 +17,7 @@ PageLoader::PageLoader(const QString &sUrl, const QString &text, bool caseSensit
     m_request.setRawHeader("Range", "bytes=0-10485760");
 
     connect(&m_netwManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(requestEnd(QNetworkReply*)));
+    // register new type to handle qt signals/slots
     static std::once_flag onceFlag;
     std::call_once( onceFlag, [ ]
     {
@@ -54,6 +55,7 @@ void PageLoader::start()
 void PageLoader::stop()
 {
     emit cancelDownloading();
+    // requestEnd() will be called after QNetworkReply::abort()
 }
 
 void PageLoader::requestEnd(QNetworkReply *reply)
@@ -67,7 +69,8 @@ void PageLoader::requestEnd(QNetworkReply *reply)
         QString contentType = QString(reply->rawHeader("Content-Type"));
         qDebug() << "httpFinish(" << reply->url().toString() << ") status " << httpStatus
                  << " Type: "<<  contentType;
-
+        // 200 http ok
+        // 206 - partitial content
         if (httpStatus == 200 || httpStatus == 206) // OK
         {
             if (contentType.contains("text"))
@@ -84,24 +87,29 @@ void PageLoader::requestEnd(QNetworkReply *reply)
                 qDebug() << "Don't have text!";
                 operationStatus = Status::HTTP_NO_TEXT;
             }
-        } else if (httpStatus == 301 || httpStatus == 302)  // Moved
+        }
+        // 301 Moved Permanently
+        // 302 Moved Temporarily
+        else if (httpStatus == 301 || httpStatus == 302)
         {
             m_request.setUrl(QString (reply->rawHeader("Location")));
             reply->deleteLater();
             start();
             return;
         }
+
         // Remove url name from error description
         QString errr = reply->errorString();
         QString url = reply->url().toString();
         int pos = url.indexOf("://", 0);
         url.remove(0, pos + 3);
         errr.replace(url, "");
-
+        // notify listener that doqnloading finished.
         emit pageLoaded(m_id, operationStatus, errr, urls, m_depth);
     } else {
         qDebug() << "httpFinish(" << reply->url().toString() << ") Operation was canceled";
     }
+    // Clean-up resourses
     reply->deleteLater();
     this->deleteLater();
 }

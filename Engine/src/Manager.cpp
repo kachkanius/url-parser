@@ -3,13 +3,15 @@
 #include <mutex>
 
 Manager::Manager(QObject *parent) : QObject(parent)
+  , m_state(State::STOPPED)
+  , m_caseSensitive(false)
   , m_maxLinksCount(0)
   , m_linkCount(0)
   , m_maxThreadsCount(1)
   , m_activeThreads(0)
-  , m_caseSensitive(false)
-  , m_state(State::STOPPED)
+
 {
+    // register new type to handle qt signals/slots
     static std::once_flag onceFlag;
     std::call_once( onceFlag, [ ]
     {
@@ -25,11 +27,6 @@ Manager::~Manager()
 int Manager::getMaxScannedLinks() const
 {
     return m_maxLinksCount;
-}
-
-int Manager::getScannedLinks()
-{
-    return m_linkCount;
 }
 
 void Manager::setMaxScannedLinks(int links)
@@ -59,16 +56,20 @@ void Manager::start(const QString &startPage, bool caseSensitive, const QString 
         break;
     default: // start
     {
+        // Remove/stop prev jobs.
         setState(State::STOPPED);
         setState(State::RUNNING);
         cleanUp();
         m_strToFind = strToFind;
         m_caseSensitive = caseSensitive;
+
+        // Prepare first (root) vertex.
         Job firstItem(startPage, 0);
         QQueue<Job> zeroLevel;
         zeroLevel.enqueue(firstItem);
         m_grapth.push_back(zeroLevel);
         m_currentJobs = &m_grapth[0];
+        // start BFS
         startHeadJob();
         break;
     }
@@ -88,22 +89,36 @@ void Manager::threadFinished(int id, PageLoader::Status status, QString err, QSt
 {
     QMutexLocker locker(&m_queueMutex);
     qDebug() << "Manager::threadFinished (" << id << ") status: " << status;
+    // Update UI
     emit updateItem(id, status, err);
+
     --m_activeThreads;
 
-    if (m_state != State::STOPPED) {
-        if (m_grapth.size() <= depth + 1) {
+    if (m_state != State::STOPPED)
+    {
+        // Prepare new branch if not exist yet
+        if (m_grapth.size() <= depth + 1)
+        {
             m_grapth.push_back(QQueue<Job>());
         }
-        for (auto& it : urls) {
+
+        // Add founded url to queue of derived branch
+        for (auto& it : urls)
+        {
             m_grapth[depth + 1].enqueue(Job(it,depth + 1));
         }
         qDebug() << urls.size() << "urls were added.";
 
-        if (m_currentJobs->empty() && m_grapth.size() > depth) {
+        // Check if all jobs on this level were started/finished.
+        // If so, set next level as current.
+        if (m_currentJobs->empty() && m_grapth.size() > depth)
+        {
             m_currentJobs = &m_grapth[depth + 1];
         }
-        if (m_state == State::RUNNING) {
+        // Get next job if we are not paused
+        if (m_state == State::RUNNING)
+        {
+            // Start job for every free 'thread'
             for (int i = 0; i <= (m_maxThreadsCount - m_activeThreads); ++i)
             {
                 if (!startHeadJob())
@@ -123,12 +138,15 @@ void Manager::threadFinished(int id, PageLoader::Status status, QString err, QSt
 
 bool Manager::startHeadJob()
 {
-    if (m_linkCount >= m_maxLinksCount) {
+    // Reached maximum number of scanned links.
+    if (m_linkCount >= m_maxLinksCount)
+    {
         qDebug() << "End searching!";
         setState(State::WAITING);
         return false;
     }
 
+    // Not reached maximum number of scanned links but nothing to do.
     if (m_state == State::RUNNING && m_currentJobs->empty())
     {
         qDebug() << "No jobs any more!";
@@ -137,6 +155,7 @@ bool Manager::startHeadJob()
     }
 
     Job job = m_currentJobs->dequeue();
+    // PageLoader will be deleted automatcly at the end of operation by calling deleteLater();
     PageLoader* worker = new PageLoader(job.url, m_strToFind, m_caseSensitive, job.depth);
     worker->setId(m_linkCount);
     ++m_linkCount;
@@ -149,7 +168,7 @@ bool Manager::startHeadJob()
     connect(worker, SIGNAL(pageLoaded(int, PageLoader::Status, QString, QStringList, int)),
             this, SLOT(threadFinished(int, PageLoader::Status, QString, QStringList, int)));
 
-    // Notify Manager that loading done
+    // Force stop downloading.
     connect(this, SIGNAL(stopAllThreads()), worker, SLOT(stop()));
 
     worker->start();
