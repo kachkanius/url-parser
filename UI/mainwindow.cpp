@@ -71,7 +71,7 @@ QString MainWindow::getStringStatus(PageLoader::Status st, QString err)
         return "Not found";
         break;
     case PageLoader::Status::HTTP_NO_TEXT:
-        return "Not a text";
+        return "Not a text page";
         break;
     case PageLoader::Status::LOADING:
     default:
