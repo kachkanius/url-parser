@@ -24,6 +24,6 @@ HEADERS  +=  \
            PageParserTest.h \
     PageLoaderTest.h
 
-LIBS += -L$$PWD/../build/Engine -lwtf_engine
+LIBS += -L$$OUT_PWD/../Engine -lwtf_engine
 
 DEFINES += DATASET_DIR=\'\"$$PWD/dataset/\"\'

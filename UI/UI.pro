@@ -25,7 +25,7 @@ HEADERS  +=  \
 
 FORMS    += mainwindow.ui
 
-LIBS += -L$$PWD/../build/Engine -lwtf_engine
+LIBS += -L$$OUT_PWD/../Engine -lwtf_engine
 
 RESOURCES += \
     resourses.qrc
