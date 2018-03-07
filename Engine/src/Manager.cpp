@@ -179,6 +179,7 @@ bool Manager::startHeadJob()
 
 void Manager::cleanUp()
 {
+    m_activeThreads = 0;
     m_grapth.clear();
     m_linkCount = 0;
     emit stopAllThreads();
