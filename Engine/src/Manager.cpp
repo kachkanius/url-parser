@@ -94,11 +94,9 @@ void Manager::threadFinished(int id, PageLoader::Status status, QString err, QSt
 
     --m_activeThreads;
 
-    if (m_state != State::STOPPED)
-    {
-        // Prepare new branch if not exist yet
-        if (m_grapth.size() <= depth + 1)
-        {
+    if (m_state != State::STOPPED) {
+        // Add just parsed urls to grapth
+        if (m_grapth.size() <= depth + 1) {
             m_grapth.push_back(QQueue<Job>());
         }
 
@@ -111,22 +109,26 @@ void Manager::threadFinished(int id, PageLoader::Status status, QString err, QSt
 
         // Check if all jobs on this level were started/finished.
         // If so, set next level as current.
-        if (m_currentJobs->empty() && m_grapth.size() > depth)
-        {
-            m_currentJobs = &m_grapth[depth + 1];
+        if (m_currentJobs->empty()) {
+            if (m_grapth.size() > depth)
+            {
+                qDebug() << "Go to next  Level "<< depth + 1;
+                m_currentJobs = &m_grapth[depth + 1];
+            } else {
+                qDebug() << "No Urls in grapth.";
+                setState(State::WAITING);
+            }
         }
-        // Get next job if we are not paused
-        if (m_state == State::RUNNING)
-        {
-            // Start job for every free 'thread'
-            for (int i = 0; i <= (m_maxThreadsCount - m_activeThreads); ++i)
+
+        if (m_state == State::RUNNING) {
+            int freeThreads = (m_maxThreadsCount - m_activeThreads);
+            for (int i = 0; i <= freeThreads; ++i)
             {
                 if (!startHeadJob())
                 {
                     break;
                 }
             }
-
         } else if ((m_state == State::WAITING) && (m_activeThreads == 0))
         {
             qDebug() << "All threads finished, finish.";
@@ -149,8 +151,7 @@ bool Manager::startHeadJob()
     // Not reached maximum number of scanned links but nothing to do.
     if (m_state == State::RUNNING && m_currentJobs->empty())
     {
-        qDebug() << "No jobs any more!";
-        setState(State::FINISHED);
+        qDebug() << "No jobs any more at this level!";
         return false;
     }
 
